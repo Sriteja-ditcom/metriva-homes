@@ -1,0 +1,608 @@
+// ================================================
+// Metriva Homes — Prisma Schema
+// Database: PostgreSQL (Supabase)
+// ================================================
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearch"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =============================================
+// ENUMS
+// =============================================
+
+enum UserRole {
+  BUYER
+  SELLER
+  BROKER
+  BUILDER
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  PENDING_VERIFICATION
+}
+
+enum PropertyType {
+  APARTMENT
+  HOUSE
+  VILLA
+  PLOT
+  COMMERCIAL
+  OFFICE
+  SHOP
+  WAREHOUSE
+  FARMHOUSE
+}
+
+enum ListingType {
+  BUY
+  RENT
+  COMMERCIAL
+}
+
+enum PropertyStatus {
+  DRAFT
+  PENDING_REVIEW
+  ACTIVE
+  SOLD
+  RENTED
+  EXPIRED
+  REJECTED
+  SUSPENDED
+}
+
+enum FurnishingStatus {
+  UNFURNISHED
+  SEMI_FURNISHED
+  FULLY_FURNISHED
+}
+
+enum SubscriptionPlan {
+  FREE
+  BASIC
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+enum FraudReportStatus {
+  PENDING
+  INVESTIGATING
+  RESOLVED
+  DISMISSED
+}
+
+enum PaymentStatus {
+  PENDING
+  CAPTURED
+  FAILED
+  REFUNDED
+}
+
+enum PaymentPurpose {
+  FEATURED_LISTING
+  SUBSCRIPTION
+  BOOST
+}
+
+enum NotificationType {
+  PROPERTY_ALERT
+  ENQUIRY
+  PAYMENT
+  SYSTEM
+  FRAUD_UPDATE
+  LISTING_APPROVED
+  LISTING_REJECTED
+}
+
+// =============================================
+// CORE MODELS
+// =============================================
+
+model User {
+  id                   String     @id @default(cuid())
+  email                String?    @unique
+  phone                String?    @unique
+  passwordHash         String?
+  firstName            String
+  lastName             String
+  avatar               String?
+  role                 UserRole   @default(BUYER)
+  status               UserStatus @default(PENDING_VERIFICATION)
+  isEmailVerified      Boolean    @default(false)
+  isPhoneVerified      Boolean    @default(false)
+  googleId             String?    @unique
+  refreshTokenHash     String?
+  emailVerifyToken     String?
+  resetPasswordToken   String?
+  resetPasswordExpiry  DateTime?
+  fcmTokens            String[]   @default([])
+  lastLoginAt          DateTime?
+  createdAt            DateTime   @default(now())
+  updatedAt            DateTime   @updatedAt
+
+  // Relations
+  properties      Property[]
+  savedProperties SavedProperty[]
+  notifications   Notification[]
+  payments        Payment[]
+  subscription    Subscription?
+  broker          Broker?
+  builder         Builder?
+  reviews         Review[]          @relation("ReviewerRelation")
+  fraudReports    FraudReport[]     @relation("ReporterRelation")
+  auditLogs       AuditLog[]
+  searchAlerts    SearchAlert[]
+  enquiries       Enquiry[]
+
+  @@index([email])
+  @@index([phone])
+  @@index([role])
+  @@index([status])
+  @@map("users")
+}
+
+model Broker {
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  licenseNumber   String?   @unique
+  agencyName      String?
+  agencyLogo      String?
+  experience      Int?
+  specializations String[]  @default([])
+  localities      String[]  @default([])
+  reraNumber      String?
+  rating          Float     @default(0)
+  totalReviews    Int       @default(0)
+  totalDeals      Int       @default(0)
+  isVerified      Boolean   @default(false)
+  verifiedAt      DateTime?
+  documents       Json?
+  bio             String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  properties Property[]
+
+  @@index([isVerified])
+  @@index([rating])
+  @@map("brokers")
+}
+
+model Builder {
+  id            String    @id @default(cuid())
+  userId        String    @unique
+  companyName   String
+  companyLogo   String?
+  reraNumber    String?   @unique
+  established   Int?
+  totalProjects Int       @default(0)
+  rating        Float     @default(0)
+  totalReviews  Int       @default(0)
+  isVerified    Boolean   @default(false)
+  verifiedAt    DateTime?
+  documents     Json?
+  description   String?
+  website       String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  properties Property[]
+  projects   Project[]
+
+  @@index([isVerified])
+  @@map("builders")
+}
+
+model Project {
+  id             String    @id @default(cuid())
+  builderId      String
+  name           String
+  slug           String    @unique
+  description    String?
+  reraNumber     String?
+  launchDate     DateTime?
+  completionDate DateTime?
+  totalUnits     Int?
+  availableUnits Int?
+  locality       String
+  city           String
+  state          String
+  pincode        String?
+  lat            Float?
+  lng            Float?
+  images         String[]  @default([])
+  amenities      String[]  @default([])
+  status         String    @default("UPCOMING")
+  priceMin       BigInt?
+  priceMax       BigInt?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  builder    Builder    @relation(fields: [builderId], references: [id])
+  properties Property[]
+
+  @@index([city])
+  @@index([builderId])
+  @@map("projects")
+}
+
+model Locality {
+  id              String   @id @default(cuid())
+  name            String
+  slug            String   @unique
+  city            String
+  state           String
+  country         String   @default("India")
+  lat             Float
+  lng             Float
+  pincode         String?
+  avgBuyPrice     BigInt?
+  avgRentPrice    BigInt?
+  connectivity    Json?
+  amenities       Json?
+  aiInsights      String?
+  aiInsightsAt    DateTime?
+  popularityScore Float    @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  properties Property[]
+
+  @@unique([name, city, state])
+  @@index([city])
+  @@index([state])
+  @@map("localities")
+}
+
+// =============================================
+// PROPERTY MODELS
+// =============================================
+
+model Property {
+  id          String         @id @default(cuid())
+  ownerId     String
+  brokerId    String?
+  builderId   String?
+  projectId   String?
+  localityId  String?
+
+  // Basics
+  title       String
+  slug        String         @unique
+  description String
+  type        PropertyType
+  listingType ListingType
+  status      PropertyStatus @default(DRAFT)
+
+  // Location
+  address   String
+  locality  String
+  city      String
+  state     String
+  pincode   String
+  lat       Float?
+  lng       Float?
+
+  // Property Details
+  bedrooms     Int?
+  bathrooms    Int?
+  balconies    Int?
+  floorNumber  Int?
+  totalFloors  Int?
+  builtUpArea  Float?
+  carpetArea   Float?
+  plotArea     Float?
+  facing       String?
+  furnishing   FurnishingStatus?
+  parking      Int?           @default(0)
+  age          Int?           // years since construction
+
+  // Pricing (stored in paise)
+  price             BigInt
+  pricePerSqft      BigInt?
+  maintenanceCharge BigInt?
+  isNegotiable      Boolean    @default(false)
+
+  // Features
+  amenities   String[]       @default([])
+  nearbyPlaces Json?
+
+  // Verification & Trust
+  isVerified      Boolean    @default(false)
+  isOwnerVerified Boolean    @default(false)
+  verifiedAt      DateTime?
+  documents       Json?
+
+  // AI Signals
+  aiTrustScore   Float?
+  aiSummary      String?
+  aiSummaryAt    DateTime?
+  isDuplicateFlag Boolean    @default(false)
+  isFraudFlag    Boolean     @default(false)
+
+  // Stats
+  views     Int      @default(0)
+  enquiries Int      @default(0)
+  saves     Int      @default(0)
+
+  // Featured
+  isFeatured   Boolean   @default(false)
+  featuredTill DateTime?
+
+  // Timestamps
+  postedAt  DateTime @default(now())
+  expiresAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  owner       User           @relation(fields: [ownerId], references: [id])
+  broker      Broker?        @relation(fields: [brokerId], references: [id])
+  builder     Builder?       @relation(fields: [builderId], references: [id])
+  project     Project?       @relation(fields: [projectId], references: [id])
+  localityRef Locality?      @relation(fields: [localityId], references: [id])
+  images      PropertyImage[]
+  savedBy     SavedProperty[]
+  aiScore     AiScore?
+  fraudReports FraudReport[]
+  reviews     Review[]
+  payments    Payment[]
+  enquiries_  Enquiry[]
+
+  @@index([city, listingType, type])
+  @@index([ownerId])
+  @@index([status])
+  @@index([price])
+  @@index([isFeatured])
+  @@index([aiTrustScore])
+  @@index([postedAt])
+  @@map("properties")
+}
+
+model PropertyImage {
+  id         String   @id @default(cuid())
+  propertyId String
+  url        String
+  caption    String?
+  isPrimary  Boolean  @default(false)
+  order      Int      @default(0)
+  width      Int?
+  height     Int?
+  sizeBytes  Int?
+  createdAt  DateTime @default(now())
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
+  @@map("property_images")
+}
+
+model SavedProperty {
+  id         String   @id @default(cuid())
+  userId     String
+  propertyId String
+  createdAt  DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, propertyId])
+  @@index([userId])
+  @@map("saved_properties")
+}
+
+model Enquiry {
+  id         String   @id @default(cuid())
+  userId     String
+  propertyId String
+  message    String?
+  phone      String?
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id])
+  property Property @relation(fields: [propertyId], references: [id])
+
+  @@index([propertyId])
+  @@index([userId])
+  @@map("enquiries")
+}
+
+// =============================================
+// AI MODELS
+// =============================================
+
+model AiScore {
+  id                String   @id @default(cuid())
+  propertyId        String   @unique
+  trustScore        Float
+  fraudRiskScore    Float
+  priceAccuracy     Float?
+  contentQuality    Float?
+  verificationScore Float?
+  signals           Json
+  isDuplicate       Boolean  @default(false)
+  duplicateOf       String?
+  model             String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([trustScore])
+  @@index([fraudRiskScore])
+  @@map("ai_scores")
+}
+
+// =============================================
+// TRUST & FRAUD MODELS
+// =============================================
+
+model FraudReport {
+  id         String            @id @default(cuid())
+  reporterId String
+  propertyId String
+  reason     String
+  description String?
+  evidence   String[]          @default([])
+  status     FraudReportStatus @default(PENDING)
+  resolvedAt DateTime?
+  resolvedBy String?
+  resolution String?
+  adminNotes String?
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  reporter User     @relation("ReporterRelation", fields: [reporterId], references: [id])
+  property Property @relation(fields: [propertyId], references: [id])
+
+  @@index([status])
+  @@index([propertyId])
+  @@map("fraud_reports")
+}
+
+// =============================================
+// SUBSCRIPTION & PAYMENT MODELS
+// =============================================
+
+model Subscription {
+  id        String           @id @default(cuid())
+  userId    String           @unique
+  plan      SubscriptionPlan @default(FREE)
+  status    String           @default("ACTIVE")
+  startDate DateTime         @default(now())
+  endDate   DateTime?
+  features  Json?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payments Payment[]
+
+  @@index([plan])
+  @@index([status])
+  @@map("subscriptions")
+}
+
+model Payment {
+  id                String        @id @default(cuid())
+  userId            String
+  propertyId        String?
+  subscriptionId    String?
+  amount            BigInt
+  currency          String        @default("INR")
+  status            PaymentStatus @default(PENDING)
+  provider          String        @default("razorpay")
+  providerId        String?
+  providerPaymentId String?
+  purpose           PaymentPurpose
+  metadata          Json?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id])
+  property     Property?     @relation(fields: [propertyId], references: [id])
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@index([providerId])
+  @@map("payments")
+}
+
+// =============================================
+// NOTIFICATION & ALERT MODELS
+// =============================================
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  title     String
+  body      String
+  type      NotificationType
+  data      Json?
+  isRead    Boolean          @default(false)
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model SearchAlert {
+  id         String   @id @default(cuid())
+  userId     String
+  name       String
+  filters    Json
+  isActive   Boolean  @default(true)
+  frequency  String   @default("DAILY")
+  lastSentAt DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isActive])
+  @@map("search_alerts")
+}
+
+// =============================================
+// REVIEW MODEL
+// =============================================
+
+model Review {
+  id         String   @id @default(cuid())
+  reviewerId String
+  propertyId String
+  rating     Int
+  comment    String?
+  isVerified Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  reviewer User     @relation("ReviewerRelation", fields: [reviewerId], references: [id])
+  property Property @relation(fields: [propertyId], references: [id])
+
+  @@unique([reviewerId, propertyId])
+  @@index([propertyId])
+  @@map("reviews")
+}
+
+// =============================================
+// AUDIT LOG
+// =============================================
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  entity    String
+  entityId  String?
+  oldValue  Json?
+  newValue  Json?
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([entity, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}

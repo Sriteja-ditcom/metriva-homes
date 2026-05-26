@@ -1,0 +1,43 @@
+{
+  "name": "metriva-homes",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Metriva Homes — India's AI-powered real estate ecosystem",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\"",
+    "db:push": "turbo run db:push --filter=api",
+    "db:migrate": "turbo run db:migrate --filter=api",
+    "db:studio": "turbo run db:studio --filter=api",
+    "db:seed": "turbo run db:seed --filter=api",
+    "clean": "turbo run clean && rimraf node_modules"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.0",
+    "prettier": "^3.3.0",
+    "rimraf": "^5.0.0",
+    "@trivago/prettier-plugin-sort-imports": "^4.3.0"
+  },
+  "prettier": {
+    "semi": true,
+    "singleQuote": true,
+    "trailingComma": "all",
+    "printWidth": 100,
+    "tabWidth": 2,
+    "plugins": ["@trivago/prettier-plugin-sort-imports"],
+    "importOrder": ["^@metriva/(.*)$", "^@/(.*)$", "^[./]"],
+    "importOrderSeparation": true
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@11.3.0"
+}

@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm --version)",
+      "Bash(pnpm --version)",
+      "Bash(docker --version)",
+      "PowerShell(Get-Command psql -ErrorAction SilentlyContinue)",
+      "PowerShell(winget search postgresql --source winget 2>&1)",
+      "PowerShell(winget search memurai --source winget 2>&1)",
+      "PowerShell(winget install PostgreSQL.PostgreSQL.16 --accept-source-agreements --accept-package-agreements 2>&1)",
+      "PowerShell(winget install Memurai.MemuraiDeveloper --accept-source-agreements --accept-package-agreements 2>&1)",
+      "PowerShell(Start-Process msiexec.exe -ArgumentList \"/i `\"$env:TEMP\\\\Memurai-Developer.msi`\" /quiet /norestart\" -Wait -PassThru | Select-Object ExitCode)",
+      "PowerShell(Get-Service memurai -ErrorAction SilentlyContinue)",
+      "PowerShell(Get-NetTCPConnection -LocalPort 6379 -ErrorAction SilentlyContinue)",
+      "PowerShell(Test-NetConnection -ComputerName localhost -Port 6379 -ErrorAction SilentlyContinue)",
+      "PowerShell(Start-Process \"C:\\\\redis\\\\redis-server.exe\" -ArgumentList \"C:\\\\redis\\\\redis.windows.conf\" -WindowStyle Hidden)",
+      "PowerShell(Test-NetConnection -ComputerName localhost -Port 6379 -InformationLevel Quiet)",
+      "PowerShell(Test-NetConnection -ComputerName localhost -Port 5432 -InformationLevel Quiet -ErrorAction SilentlyContinue)"
+    ]
+  }
+}

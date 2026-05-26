@@ -1,0 +1,87 @@
+version: '3.9'
+
+services:
+  # PostgreSQL — local dev only (use Supabase in staging/prod)
+  postgres:
+    image: postgres:16-alpine
+    container_name: metriva_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: metriva_dev
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis — caching, rate limiting, sessions
+  redis:
+    image: redis:7-alpine
+    container_name: metriva_redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # NestJS API
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+      target: development
+    container_name: metriva_api
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/metriva_dev
+      REDIS_URL: redis://redis:6379
+    ports:
+      - '3001:3001'
+    volumes:
+      - ./apps/api/src:/app/src
+      - ./packages:/packages
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: npm run dev
+
+  # React Web App
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+      target: development
+    container_name: metriva_web
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - '5173:5173'
+    volumes:
+      - ./apps/web/src:/app/src
+    depends_on:
+      - api
+    command: npm run dev -- --host
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  default:
+    name: metriva_network
