@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { SlidersHorizontal } from 'lucide-react';
 import { PropertyCard, PropertyCardSkeleton } from '../../components/Property/PropertyCard';
 import { useProperties } from '../../hooks/useProperties';
-import type { PropertySearchFilters } from '@metriva/shared';
+import type { Property, PropertySearchFilters } from '@metriva/shared';
 
 export default function Properties() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -15,7 +15,7 @@ export default function Properties() {
     query: searchParams.get('query') ?? undefined,
     minPrice: searchParams.get('minPrice') ? Number(searchParams.get('minPrice')) : undefined,
     maxPrice: searchParams.get('maxPrice') ? Number(searchParams.get('maxPrice')) : undefined,
-    bedrooms: searchParams.get('bedrooms') ? Number(searchParams.get('bedrooms')) : undefined,
+    bedrooms: searchParams.get('bedrooms') ? [Number(searchParams.get('bedrooms'))] : undefined,
     sortBy: (searchParams.get('sortBy') as PropertySearchFilters['sortBy']) ?? 'newest',
     page: Number(searchParams.get('page') ?? 1),
     limit: 20,
@@ -68,7 +68,7 @@ export default function Properties() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
         {isLoading
           ? Array.from({ length: 12 }).map((_, i) => <PropertyCardSkeleton key={i} />)
-          : items.map((property) => <PropertyCard key={property.id} property={property} />)
+          : items.map((property: Property) => <PropertyCard key={property.id} property={property} />)
         }
       </div>
 
