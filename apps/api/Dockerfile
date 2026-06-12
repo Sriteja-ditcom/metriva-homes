@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # ---- Build stage ----
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 WORKDIR /app
 
 # Install pnpm
@@ -28,7 +28,7 @@ RUN pnpm --filter @metriva/api build
 RUN pnpm --filter @metriva/api deploy --prod /app/deploy
 
 # ---- Production stage ----
-FROM node:20-alpine AS runner
+FROM node:22-alpine AS runner
 WORKDIR /app
 
 RUN apk add --no-cache dumb-init
