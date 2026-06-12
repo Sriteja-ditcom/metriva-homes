@@ -180,7 +180,7 @@ export class PropertiesService {
       where: {
         status: 'ACTIVE',
         isFeatured: true,
-        featuredTill: { gt: new Date() },
+        OR: [{ featuredTill: null }, { featuredTill: { gt: new Date() } }],
       },
       select: PROPERTY_SELECT,
       orderBy: { aiTrustScore: 'desc' },
