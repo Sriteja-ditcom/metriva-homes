@@ -1,0 +1,6 @@
+{
+  "buildCommand": "pnpm --filter @metriva/web build",
+  "outputDirectory": "apps/web/dist",
+  "installCommand": "pnpm install --frozen-lockfile",
+  "framework": null
+}

@@ -20,7 +20,7 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       const res = await authApi.login({ email, password });
-      setAuth(res.data.user, res.data.tokens.accessToken);
+      setAuth(res.data.user, res.data.tokens.accessToken, res.data.refreshToken);
     } catch (err: unknown) {
       const message = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message ?? 'Login failed';
       Alert.alert('Error', message);

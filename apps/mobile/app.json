@@ -47,7 +47,7 @@
       ["expo-image-picker", { "photosPermission": "Metriva Homes needs access to your photos" }]
     ],
     "extra": {
-      "apiUrl": "http://localhost:3001",
+      "apiUrl": "https://metrivaapi-production.up.railway.app",
       "eas": {
         "projectId": "your-eas-project-id"
       }

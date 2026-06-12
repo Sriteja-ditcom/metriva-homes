@@ -54,8 +54,7 @@ export class AuthController {
   async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
     const result = await this.authService.login(dto);
     this.setRefreshTokenCookie(res, result.refreshToken);
-    const { refreshToken: _, ...safeResult } = result;
-    return safeResult;
+    return result;
   }
 
   @Public()
@@ -98,8 +97,7 @@ export class AuthController {
   ) {
     const result = await this.authService.verifyOtp(dto);
     this.setRefreshTokenCookie(res, result.refreshToken);
-    const { refreshToken: _, ...safeResult } = result;
-    return safeResult;
+    return result;
   }
 
   @Public()

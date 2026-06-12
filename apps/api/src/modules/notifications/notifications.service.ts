@@ -20,7 +20,7 @@ export class NotificationsService {
     }
     this.fromEmail = configService.get<string>('resend.from', 'noreply@metrivahomes.com');
 
-    // Initialize Firebase Admin (once, idempotent)
+    // Initialize Firebase Admin (once, idempotent) — skip gracefully if credentials are missing/invalid
     if (!admin.apps.length) {
       const firebaseConfig = {
         projectId: configService.get<string>('firebase.projectId'),
@@ -28,10 +28,14 @@ export class NotificationsService {
         clientEmail: configService.get<string>('firebase.clientEmail'),
       };
 
-      if (firebaseConfig.projectId && firebaseConfig.privateKey) {
-        admin.initializeApp({
-          credential: admin.credential.cert(firebaseConfig as admin.ServiceAccount),
-        });
+      if (firebaseConfig.projectId && firebaseConfig.privateKey && firebaseConfig.clientEmail) {
+        try {
+          admin.initializeApp({
+            credential: admin.credential.cert(firebaseConfig as admin.ServiceAccount),
+          });
+        } catch (e) {
+          this.logger.warn('Firebase Admin init failed — push notifications disabled. Check FIREBASE_* env vars.');
+        }
       }
     }
   }

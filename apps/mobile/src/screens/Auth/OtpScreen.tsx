@@ -25,7 +25,7 @@ export default function OtpScreen() {
     setLoading(true);
     try {
       const res = await authApi.verifyOtp(phone, otp);
-      setAuth(res.data.user, res.data.tokens.accessToken);
+      setAuth(res.data.user, res.data.tokens.accessToken, res.data.refreshToken);
     } catch {
       Alert.alert('Invalid OTP', 'Please try again');
     } finally { setLoading(false); }

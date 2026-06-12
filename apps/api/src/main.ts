@@ -36,6 +36,7 @@ async function bootstrap() {
       'https://metrivahomes.com',
       'https://www.metrivahomes.com',
       'https://admin.metrivahomes.com',
+      'https://metriva-web.vercel.app',
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],

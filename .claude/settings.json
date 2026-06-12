@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(railway login --browserless)",
+      "PowerShell(railway whoami)",
+      "PowerShell(railway list 2>&1)",
+      "PowerShell(vercel --version 2>&1)",
+      "PowerShell(npx vercel --version 2>&1)"
+    ]
+  }
+}
