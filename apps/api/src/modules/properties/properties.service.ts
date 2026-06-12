@@ -176,7 +176,7 @@ export class PropertiesService {
   }
 
   async findFeatured() {
-    return this.prisma.property.findMany({
+    const items = await this.prisma.property.findMany({
       where: {
         status: 'ACTIVE',
         isFeatured: true,
@@ -186,6 +186,7 @@ export class PropertiesService {
       orderBy: { aiTrustScore: 'desc' },
       take: 12,
     });
+    return items.map(this.serializeProperty);
   }
 
   async update(id: string, dto: UpdatePropertyDto, user: User) {
