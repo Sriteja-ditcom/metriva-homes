@@ -9,13 +9,18 @@ build/
 .next/
 out/
 
-# Environment files
+# Environment files (secrets — do not commit)
 .env
 .env.local
 .env.*.local
 .env.development
-.env.production
 .env.staging
+# .env.production files that contain only public build-time vars are allowed below
+apps/api/.env*
+apps/mobile/.env*
+
+# Allow web .env.production (contains only public VITE_API_URL, no secrets)
+!apps/web/.env.production
 
 # Logs
 *.log
